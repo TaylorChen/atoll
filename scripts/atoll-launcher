@@ -1,0 +1,7 @@
+#!/bin/zsh
+# atoll launcher: exec the bridge if present, otherwise swallow the payload.
+# Agent sessions must never fail because Atoll is missing.
+B="$HOME/.atoll/bin/atoll-bridge"
+[ -x "$B" ] && exec "$B" "$@"
+cat >/dev/null 2>&1 || :
+exit 0

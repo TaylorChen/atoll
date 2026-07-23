@@ -1,0 +1,90 @@
+<svg width="620" height="460" viewBox="0 0 620 460" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif" role="img" aria-label="Atoll 设置界面示意（集成标签页）">
+  <title>Atoll 设置 · 集成</title>
+  <rect width="620" height="460" fill="#161618"/>
+  <g transform="translate(40,20)">
+    <rect x="0" y="0" width="540" height="420" rx="12" fill="#1e1e20"/>
+
+    <rect x="0" y="0" width="540" height="30" rx="12" fill="#2a2a2d"/>
+    <rect x="0" y="14" width="540" height="16" fill="#2a2a2d"/>
+    <circle cx="16" cy="15" r="5" fill="#ff5f57"/>
+    <circle cx="34" cy="15" r="5" fill="#febc2e"/>
+    <circle cx="52" cy="15" r="5" fill="#28c840"/>
+    <text x="270" y="19" fill="#c9c9cd" font-size="11" text-anchor="middle" font-weight="600">Atoll 设置</text>
+
+    <g transform="translate(20,44)" font-size="11">
+      <text x="0" y="10" fill="#7a7a7e">通用</text>
+      <text x="48" y="10" fill="#ffffff" font-weight="600">集成</text>
+      <rect x="44" y="18" width="34" height="2" rx="1" fill="#E86A4B"/>
+      <text x="96" y="10" fill="#7a7a7e">显示</text>
+      <text x="144" y="10" fill="#7a7a7e">行为</text>
+      <text x="192" y="10" fill="#7a7a7e">通知</text>
+      <text x="240" y="10" fill="#7a7a7e">过滤</text>
+    </g>
+    <rect x="20" y="70" width="500" height="0.5" fill="#38383c"/>
+
+    <text x="20" y="90" fill="#8a8a8e" font-size="10" font-weight="600">AGENT 集成</text>
+    <g transform="translate(20,100)" font-size="11">
+      <g>
+        <text x="0" y="14" fill="#e6e6e6">Claude Code</text>
+        <rect x="430" y="3" width="52" height="16" rx="8" fill="#16301c"/>
+        <text x="456" y="14" fill="#3ECf7f" font-size="10" text-anchor="middle">已连接</text>
+        <rect x="492" y="3" width="26" height="15" rx="7.5" fill="#3ECf7f"/>
+        <circle cx="511" cy="10.5" r="6" fill="#ffffff"/>
+      </g>
+      <g transform="translate(0,26)">
+        <text x="0" y="14" fill="#e6e6e6">Codex</text>
+        <rect x="430" y="3" width="52" height="16" rx="8" fill="#16301c"/>
+        <text x="456" y="14" fill="#3ECf7f" font-size="10" text-anchor="middle">已连接</text>
+        <rect x="492" y="3" width="26" height="15" rx="7.5" fill="#3ECf7f"/>
+        <circle cx="511" cy="10.5" r="6" fill="#ffffff"/>
+      </g>
+      <g transform="translate(0,52)">
+        <text x="0" y="14" fill="#e6e6e6">Gemini CLI</text>
+        <rect x="430" y="3" width="52" height="16" rx="8" fill="#2a2a2d"/>
+        <text x="456" y="14" fill="#9a9a9e" font-size="10" text-anchor="middle">已配置</text>
+        <rect x="492" y="3" width="26" height="15" rx="7.5" fill="#3ECf7f"/>
+        <circle cx="511" cy="10.5" r="6" fill="#ffffff"/>
+      </g>
+      <g transform="translate(0,78)">
+        <text x="0" y="14" fill="#e6e6e6">Qoder</text>
+        <rect x="410" y="3" width="72" height="16" rx="8" fill="#33280f"/>
+        <text x="446" y="14" fill="#e0a022" font-size="10" text-anchor="middle">需信任 App</text>
+        <rect x="492" y="3" width="26" height="15" rx="7.5" fill="#3ECf7f"/>
+        <circle cx="511" cy="10.5" r="6" fill="#ffffff"/>
+      </g>
+      <g transform="translate(0,104)">
+        <text x="0" y="14" fill="#e6e6e6">Cursor</text>
+        <rect x="430" y="3" width="52" height="16" rx="8" fill="#2a2a2d"/>
+        <text x="456" y="14" fill="#9a9a9e" font-size="10" text-anchor="middle">已配置</text>
+        <rect x="492" y="3" width="26" height="15" rx="7.5" fill="#3ECf7f"/>
+        <circle cx="511" cy="10.5" r="6" fill="#ffffff"/>
+      </g>
+    </g>
+
+    <rect x="20" y="238" width="500" height="0.5" fill="#38383c"/>
+    <text x="20" y="258" fill="#8a8a8e" font-size="10" font-weight="600">CLAUDE 用量桥接</text>
+    <g transform="translate(20,266)">
+      <text x="0" y="14" fill="#e6e6e6" font-size="11">状态</text>
+      <text x="482" y="14" fill="#3ECf7f" font-size="11" text-anchor="end">已连接</text>
+    </g>
+    <text x="20" y="298" fill="#7a7a7e" font-size="10">串接 statusLine 读取额度，保留并透明转发你原有输出。</text>
+
+    <rect x="20" y="312" width="500" height="0.5" fill="#38383c"/>
+    <text x="20" y="332" fill="#8a8a8e" font-size="10" font-weight="600">全局快捷键</text>
+    <g transform="translate(20,342)" font-size="11">
+      <text x="0" y="14" fill="#e6e6e6">修饰键</text>
+      <rect x="410" y="1" width="72" height="18" rx="5" fill="#2a2a2d"/>
+      <text x="446" y="14" fill="#c9c9cd" font-size="10" text-anchor="middle">⌥⇧ Option</text>
+      <g transform="translate(0,26)">
+        <text x="0" y="14" fill="#e6e6e6">允许一次</text>
+        <rect x="452" y="1" width="30" height="18" rx="5" fill="#2a2a2d"/>
+        <text x="467" y="14" fill="#c9c9cd" font-size="11" text-anchor="middle">A</text>
+      </g>
+      <g transform="translate(0,52)">
+        <text x="0" y="14" fill="#e6e6e6">切换到下一个会话</text>
+        <rect x="452" y="1" width="30" height="18" rx="5" fill="#2a2a2d"/>
+        <text x="467" y="14" fill="#c9c9cd" font-size="11" text-anchor="middle">J</text>
+      </g>
+    </g>
+  </g>
+</svg>

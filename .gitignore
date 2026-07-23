@@ -1,0 +1,9 @@
+.build/
+.DS_Store
+*.log
+build/
+__pycache__
+
+# Local-only audit captures — never publish.
+docs
+examples
