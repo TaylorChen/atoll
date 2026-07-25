@@ -68,7 +68,7 @@ final class UsageReader: ObservableObject {
 
     func start() {
         refresh()
-        timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: Tuning.usageRefreshInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
         }
     }

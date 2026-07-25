@@ -192,7 +192,7 @@ final class CodexAppServer {
         let status = t["status"] as? [String: Any]
         let isActive = (status?["type"] as? String) == "active"
         let updatedAt = (t["updatedAt"] as? Double) ?? (t["updatedAt"] as? Int).map(Double.init) ?? 0
-        let recent = Date().timeIntervalSince1970 - updatedAt < 300   // 5 min
+        let recent = Date().timeIntervalSince1970 - updatedAt < Tuning.codexRecentWindow
         guard isActive || recent else { return }
 
         let cwd = t["cwd"] as? String ?? ""

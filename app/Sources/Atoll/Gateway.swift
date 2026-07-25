@@ -175,7 +175,7 @@ final class Gateway {
                     // held after 350ms. Auto-approved requests (auto/bypass mode)
                     // close the connection almost immediately → no flicker; genuine
                     // waits stay held and surface.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + Tuning.approvalGraceDelay) { [weak self] in
                         guard let self, self.isHeld(pendingReq.id) else { return }
                         self.store.addPending(pendingReq)
                     }

@@ -93,16 +93,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeys.register()
 
         // Panel hygiene: periodically drop long-idle sessions.
-        Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { _ in
+        Timer.scheduledTimer(withTimeInterval: Tuning.idleCleanupInterval, repeats: true) { _ in
             Task { @MainActor in self.store.cleanupIdle() }
         }
         // Push AI session titles from the statusLine bridge into the store.
-        Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+        Timer.scheduledTimer(withTimeInterval: Tuning.titlePushInterval, repeats: true) { _ in
             Task { @MainActor in self.store.applyTitles(self.usage.sessionNames) }
         }
 
         if ProcessInfo.processInfo.environment["ATOLL_OPEN_SETTINGS"] != nil {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { self.openSettings() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + Tuning.settingsOpenDelay) { self.openSettings() }
         }
     }
 

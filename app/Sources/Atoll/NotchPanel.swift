@@ -126,7 +126,7 @@ final class NotchPanel {
         // Hover via cursor-geometry polling instead of SwiftUI .onHover, which
         // flickers false↔true during the expand animation and view swap and
         // caused the panel to collapse/reposition ~1s after the user hovered in.
-        hoverTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
+        hoverTimer = Timer.scheduledTimer(withTimeInterval: Tuning.hoverPollInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.pollHover() }
         }
 
@@ -247,7 +247,7 @@ final class NotchPanel {
         targetFrame = NSRect(origin: origin, size: size)
         // Snappy animation (~0.18s) instead of NSWindow's slow default.
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.18
+            ctx.duration = Tuning.panelAnimation
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().setFrame(targetFrame, display: true)
         }
