@@ -65,16 +65,18 @@ CONFIGS = {
         ],
     },
     # Qoder mirrors the Claude hook format (PascalCase events + nested hooks).
+    # QoderWork (desktop, Electron) only fires a subset of hook events — its app
+    # bundle has no PermissionRequest / UserPromptSubmit / SubagentStop event, so
+    # installing those either does nothing or breaks the whole hooks block.
+    # Monitor-only: the events it actually supports, none held for approval.
     "qoder": {
         "path": Path.home() / ".qoder" / "settings.json",
         "specs": [
+            ("SessionStart", None, 10, False),
             ("PreToolUse", "*", 10, False),
             ("PostToolUse", "*", 10, False),
-            ("SessionStart", None, 10, False),
-            ("UserPromptSubmit", None, 10, False),
             ("Stop", None, 10, False),
-            ("SubagentStop", None, 10, False),
-            ("PermissionRequest", "*", 3600, True),
+            ("SessionEnd", None, 10, False),
         ],
     },
     # Claude-compatible agents use the same hook payload and response schema,

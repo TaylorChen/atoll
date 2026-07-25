@@ -22,12 +22,6 @@ final class HooksManager: ObservableObject {
     @Published var failureMessage = ""
     @Published var workingSource = ""
 
-    private let displayNames = ["claude": "Claude Code", "codex": "Codex",
-                                "gemini": "Gemini CLI", "qoder": "Qoder", "cursor": "Cursor Agent",
-                                "qwen": "Qwen Code", "factory": "Factory", "codebuddy": "CodeBuddy",
-                                "kimi": "Kimi CLI", "opencode": "OpenCode"]
-    private let approvalSources = Set(["claude", "codex", "qoder", "qwen",
-                                       "factory", "codebuddy", "opencode"])
     private var script: String {
         if let bundled = Bundle.main.path(forResource: "install-hooks", ofType: "py") {
             return bundled
@@ -44,10 +38,9 @@ final class HooksManager: ObservableObject {
             return
         }
         failureMessage = ""
-        clis = ["claude", "codex", "cursor", "gemini", "qoder", "qwen",
-                "factory", "codebuddy", "kimi", "opencode"].compactMap { id in
+        clis = AgentCatalog.ids.compactMap { id in
             guard let s = obj[id] else { return nil }
-            return CLI(id: id, name: displayNames[id] ?? id,
+            return CLI(id: id, name: AgentCatalog.displayName(id),
                        installed: s["installed"] as? Bool ?? false,
                        enabled: s["enabled"] as? Bool ?? false,
                        healthy: s["healthy"] as? Bool ?? false,
@@ -56,7 +49,7 @@ final class HooksManager: ObservableObject {
                        missingHooks: s["missingHooks"] as? Int ?? 0,
                        configPath: s["configPath"] as? String ?? "",
                        error: s["error"] as? String ?? "",
-                       supportsApproval: approvalSources.contains(id))
+                       supportsApproval: AgentCatalog.canApprove(id))
         }
     }
 

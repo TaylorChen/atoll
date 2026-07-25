@@ -266,21 +266,7 @@ enum Theme {
 
     /// Per-agent brand color — used for the source tag AND the pixel buddy so
     /// Claude / Codex / Gemini are distinguishable at a glance.
-    static func agentColor(_ source: String) -> Color {
-        switch source {
-        case "claude": return .orange
-        case "codex": return Color(red: 0.35, green: 0.55, blue: 1.0)   // blue
-        case "gemini": return Color(red: 0.30, green: 0.85, blue: 0.85) // cyan
-        case "qoder": return Color(red: 0.65, green: 0.45, blue: 1.0)   // purple
-        case "cursor": return Color(red: 0.55, green: 0.85, blue: 0.45) // green
-        case "qwen": return Color(red: 0.75, green: 0.52, blue: 0.98)
-        case "factory": return Color(red: 0.43, green: 0.62, blue: 1.0)
-        case "codebuddy": return Color(red: 0.98, green: 0.65, blue: 0.65)
-        case "kimi": return Color(red: 0.25, green: 0.75, blue: 0.62)
-        case "opencode": return Color(red: 0.20, green: 0.80, blue: 0.72)
-        default: return Color(white: 0.6)
-        }
-    }
+    static func agentColor(_ source: String) -> Color { AgentCatalog.color(source) }
 }
 
 struct NotchView: View {

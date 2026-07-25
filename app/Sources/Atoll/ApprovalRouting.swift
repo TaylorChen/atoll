@@ -62,13 +62,6 @@ enum ApprovalRouter {
     static func isSourceAppFrontmost(source: String, bundleID: String, name: String) -> Bool {
         let app = "\(bundleID) \(name)".lowercased()
         if app.contains("app.atoll.macos") { return false }
-        let sourceApps: [String: [String]] = [
-            "codex": ["chatgpt", "codex"],
-            "claude": ["claude"],
-            "cursor": ["cursor"],
-            "qoder": ["qoder"],
-            "gemini": ["gemini"],
-        ]
-        return sourceApps[source]?.contains(where: { app.contains($0) }) == true
+        return AgentCatalog.frontmostKeywords(source).contains { app.contains($0) }
     }
 }

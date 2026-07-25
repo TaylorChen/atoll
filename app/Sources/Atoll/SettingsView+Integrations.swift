@@ -5,7 +5,7 @@ extension SettingsView {
     // MARK: 集成 (CLI Hooks)
 
     /// Trust-gated: sandboxed desktop apps that silently skip untrusted hooks.
-    private func trustGated(_ id: String) -> Bool { ["codex", "qoder"].contains(id) }
+    private func trustGated(_ id: String) -> Bool { AgentCatalog.trustGated(id) }
     private func integrationStatus(_ cli: HooksManager.CLI) -> (String, Color) {
         if !cli.cliPresent { return ("未检测到", .secondary) }
         if !cli.enabled { return (cli.installed ? "检测到残留配置" : "未启用", .secondary) }

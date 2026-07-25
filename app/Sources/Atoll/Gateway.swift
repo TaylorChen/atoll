@@ -142,7 +142,7 @@ final class Gateway {
             // Interactive request: hold the connection until the user decides.
             // Interactive request parsing is shared by verified Claude-compatible
             // agents; the response encoder below remains source-specific.
-            if ["claude", "codex", "qoder", "qwen", "factory", "codebuddy", "opencode"].contains(source),
+            if AgentCatalog.approveCapableIDs.contains(source),
                let pendingReq = ClaudeCodec.pending(form: form, source: source) {
                 Task { @MainActor in
                     // "始终允许" rule hit: answer immediately, no card.
