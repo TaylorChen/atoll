@@ -103,16 +103,10 @@ func main() {
 
 // readEndpoint parses ~/.atoll/run/endpoint (KEY=VALUE lines).
 // On a remote host the deploy script writes ATOLL_HOST plus a tunnel port.
-func readEndpoint() (port, token string) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return
-	}
-	data, err := os.ReadFile(filepath.Join(home, ".atoll", "run", "endpoint"))
-	if err != nil {
-		return
-	}
-	for _, line := range strings.Split(string(data), "\n") {
+// parseEndpoint extracts the port, token and optional host from the endpoint
+// file's contents. Pure (no filesystem/env), so it is unit-testable.
+func parseEndpoint(data string) (port, token, host string) {
+	for _, line := range strings.Split(data, "\n") {
 		k, v, ok := strings.Cut(strings.TrimSpace(line), "=")
 		if !ok {
 			continue
@@ -123,8 +117,25 @@ func readEndpoint() (port, token string) {
 		case "ATOLL_TOKEN":
 			token = v
 		case "ATOLL_HOST":
-			os.Setenv("ATOLL_HOST", v)
+			host = v
 		}
+	}
+	return
+}
+
+func readEndpoint() (port, token string) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return
+	}
+	data, err := os.ReadFile(filepath.Join(home, ".atoll", "run", "endpoint"))
+	if err != nil {
+		return
+	}
+	var host string
+	port, token, host = parseEndpoint(string(data))
+	if host != "" {
+		os.Setenv("ATOLL_HOST", host)
 	}
 	return
 }

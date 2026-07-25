@@ -70,4 +70,30 @@ final class HTTPRequestTests: XCTestCase {
         XCTAssertEqual(HTTPRequest.parseForm(Data("name=Atoll+App&path=%2Ftmp%2Fa".utf8)),
                        ["name": "Atoll App", "path": "/tmp/a"])
     }
+
+    func testParseReturnsNilBeforeHeadersComplete() {
+        XCTAssertNil(HTTPRequest.parse(Data("POST /hook/claude HTTP/1.1\r\nContent-Length: 2".utf8)),
+                     "no blank line yet → keep buffering")
+    }
+
+    func testParseExtractsLowercasedHeadersAndToken() {
+        let raw = "POST /hook/claude HTTP/1.1\r\nX-Atoll-Token: abc\r\nContent-Length: 0\r\n\r\n"
+        let req = HTTPRequest.parse(Data(raw.utf8))
+        XCTAssertEqual(req?.headers["x-atoll-token"], "abc", "header keys are lowercased")
+        XCTAssertEqual(req?.method, "POST")
+        XCTAssertEqual(req?.path, "/hook/claude")
+        XCTAssertEqual(req?.body.count, 0)
+    }
+
+    func testParseFormHandlesEmptyAndValuelessPairs() {
+        XCTAssertEqual(HTTPRequest.parseForm(Data("".utf8)), [:])
+        // A bare key with no '=' is skipped; an explicit empty value is kept.
+        XCTAssertEqual(HTTPRequest.parseForm(Data("hold=1&novalue&empty=".utf8)),
+                       ["hold": "1", "empty": ""])
+    }
+
+    func testParseFormKeepsLaterDuplicateKey() {
+        XCTAssertEqual(HTTPRequest.parseForm(Data("source=claude&source=codex".utf8)),
+                       ["source": "codex"])
+    }
 }
