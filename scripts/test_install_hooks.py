@@ -239,6 +239,43 @@ class ExtraConfigDirTests(unittest.TestCase):
             self.assertTrue(statuses[str(Path(d2))]["installed"])
 
 
+class PruneOnShrinkTests(unittest.TestCase):
+    def test_install_prunes_atoll_events_no_longer_in_spec(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "settings.json"
+            # Install the full set, then reinstall a shrunk set.
+            full = [("SessionStart", None, 10, False), ("PermissionRequest", "*", 3600, True)]
+            hooks.process("qoder", path, full, remove=False)
+            self.assertIn("PermissionRequest", json.loads(path.read_text())["hooks"])
+
+            shrunk = [("SessionStart", None, 10, False)]
+            hooks.process("qoder", path, shrunk, remove=False)
+            events = json.loads(path.read_text())["hooks"]
+            self.assertIn("SessionStart", events)
+            self.assertNotIn("PermissionRequest", events,
+                             "dropping an event from the spec must prune its Atoll entry")
+
+    def test_prune_preserves_other_tools_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "settings.json"
+            existing = {"hooks": {"PermissionRequest": [{"hooks": [{"command": "other-tool"}]}]}}
+            path.write_text(json.dumps(existing))
+            hooks.process("qoder", path, [("SessionStart", None, 10, False)], remove=False)
+            data = json.loads(path.read_text())["hooks"]
+            self.assertEqual(data["PermissionRequest"][0]["hooks"][0]["command"], "other-tool")
+
+    def test_prune_is_matcher_aware(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "settings.json"
+            both = [("PreToolUse", "*", 10, False), ("PreToolUse", "AskUserQuestion", 3600, True)]
+            hooks.process("claude", path, both, remove=False)
+            # Drop the AskUserQuestion matcher; keep "*".
+            hooks.process("claude", path, [("PreToolUse", "*", 10, False)], remove=False)
+            entries = json.loads(path.read_text())["hooks"]["PreToolUse"]
+            matchers = {e.get("matcher") for e in entries if hooks.is_atoll(e)}
+            self.assertEqual(matchers, {"*"}, "the dropped matcher's entry is pruned")
+
+
 class QoderMonitorOnlyTests(unittest.TestCase):
     def test_qoder_installs_only_supported_events_no_permission_request(self):
         specs = hooks.CONFIGS["qoder"]["specs"]

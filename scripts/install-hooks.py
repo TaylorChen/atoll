@@ -220,6 +220,19 @@ def process(source: str, path: Path, specs: list, remove: bool, flat: bool = Fal
         if source == "claude" and restore_statusline(data):
             changed = True
     else:
+        # Prune Atoll-owned entries no longer in the desired spec, so shrinking an
+        # agent's event set (e.g. dropping an unsupported event) actually takes
+        # effect. Only Atoll's own entries are touched; other tools are preserved.
+        desired = {(event, matcher) for event, matcher, _t, _h in specs}
+        for event in list(hooks):
+            kept = [e for e in hooks[event]
+                    if not is_atoll(e) or (event, e.get("matcher")) in desired]
+            if len(kept) != len(hooks[event]):
+                changed = True
+                if kept:
+                    hooks[event] = kept
+                else:
+                    del hooks[event]
         for event, matcher, timeout, hold in specs:
             entries = hooks.setdefault(event, [])
             if any(is_atoll(e) and e.get("matcher") == matcher for e in entries):

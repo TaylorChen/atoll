@@ -6,20 +6,21 @@ extension SettingsView {
 
     /// Trust-gated: sandboxed desktop apps that silently skip untrusted hooks.
     private func trustGated(_ id: String) -> Bool { AgentCatalog.trustGated(id) }
+    private func health(_ cli: HooksManager.CLI) -> HookHealth {
+        HookHealthPolicy.verdict(
+            cliPresent: cli.cliPresent, enabled: cli.enabled, installed: cli.installed,
+            healthy: cli.healthy, error: cli.error, missingHooks: cli.missingHooks,
+            seen: store.seenSources.contains(cli.id), trustGated: AgentCatalog.trustGated(cli.id))
+    }
+
     private func integrationStatus(_ cli: HooksManager.CLI) -> (String, Color) {
-        if !cli.cliPresent { return ("未检测到", .secondary) }
-        if !cli.enabled { return (cli.installed ? "检测到残留配置" : "未启用", .secondary) }
-        if !cli.healthy { return ("配置异常", .red) }
-        if store.seenSources.contains(cli.id) { return ("已连接", .green) }
-        return ("已配置", .orange)
+        let h = health(cli)
+        return (h.label, h.color)
     }
 
     private func diagnosticText(_ cli: HooksManager.CLI) -> String {
-        if cli.error.hasPrefix("config-invalid:") { return "配置文件无法解析，请修复原文件后重新检测" }
-        if cli.error == "bridge-missing" { return "Atoll bridge 缺失，需要重新安装或修复" }
-        if cli.error.hasPrefix("hooks-missing:") { return "Hook 配置不完整，缺少 \(cli.missingHooks) 项" }
-        if cli.healthy && !store.seenSources.contains(cli.id) { return "配置完整，等待该 Agent 发来首个事件" }
-        return cli.error
+        let hint = health(cli).hint
+        return hint.isEmpty ? cli.error : hint
     }
 
     var integrationsTab: some View {

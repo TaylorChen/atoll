@@ -20,6 +20,14 @@ import (
 const version = "0.1.0"
 
 func main() {
+	// Let another local controller own a run: set ATOLL_SKIP_HOOKS=1 on the agent
+	// process and this shim exits immediately without reading or forwarding the
+	// payload, so the agent proceeds without Atoll intervention. Meant per-process
+	// (e.g. a nested subagent, or coexisting with another island tool), not global.
+	if skipHooks(os.Getenv("ATOLL_SKIP_HOOKS")) {
+		return
+	}
+
 	source := "claude"
 	hold := false
 	for i, a := range os.Args[1:] {
@@ -103,6 +111,9 @@ func main() {
 
 // readEndpoint parses ~/.atoll/run/endpoint (KEY=VALUE lines).
 // On a remote host the deploy script writes ATOLL_HOST plus a tunnel port.
+// skipHooks reports whether the ATOLL_SKIP_HOOKS value opts this run out.
+func skipHooks(value string) bool { return value == "1" }
+
 // parseEndpoint extracts the port, token and optional host from the endpoint
 // file's contents. Pure (no filesystem/env), so it is unit-testable.
 func parseEndpoint(data string) (port, token, host string) {

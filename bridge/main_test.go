@@ -2,6 +2,17 @@ package main
 
 import "testing"
 
+func TestSkipHooks(t *testing.T) {
+	if !skipHooks("1") {
+		t.Error("ATOLL_SKIP_HOOKS=1 should opt the run out")
+	}
+	for _, v := range []string{"", "0", "true", "yes"} {
+		if skipHooks(v) {
+			t.Errorf("ATOLL_SKIP_HOOKS=%q should not opt out", v)
+		}
+	}
+}
+
 func TestParseEndpoint(t *testing.T) {
 	port, token, host := parseEndpoint("ATOLL_PORT=51936\nATOLL_TOKEN=abc123\n")
 	if port != "51936" || token != "abc123" || host != "" {
