@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift tests
+        working-directory: app
+        run: swift test
+
+      - name: Go bridge tests
+        working-directory: bridge
+        run: go test ./...
+
+      - name: Python installer tests
+        run: python3 -m unittest scripts/test_install_hooks.py
+
+      - name: Lint OpenCode plugin
+        run: node --check scripts/atoll-opencode.js

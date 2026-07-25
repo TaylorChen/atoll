@@ -101,7 +101,7 @@ enum Diagnostics {
     /// it reads Settings and the hooks manager.
     @MainActor
     static func collect(hooks: HooksManager) -> [String: Any] {
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
+        let appVersion = AppInfo.version
         let port = gatewayPort()
         let integrations = hooks.clis.map {
             IntegrationDiag(id: $0.id, installed: $0.installed, enabled: $0.enabled,

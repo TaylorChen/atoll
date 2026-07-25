@@ -45,7 +45,7 @@ struct SettingsView: View {
             }
             shortcutsSection
             Section("关于") {
-                HStack { Text("版本"); Spacer(); Text("1.0.0").foregroundStyle(.secondary) }
+                HStack { Text("版本"); Spacer(); Text(AppInfo.version).foregroundStyle(.secondary) }
                 Text("Atoll — 多 Agent 灵动岛监控 / 批准。纯本地、无云端、无遥测。")
                     .font(.caption).foregroundStyle(.secondary)
             }
