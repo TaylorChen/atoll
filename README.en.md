@@ -36,13 +36,14 @@ Runs fully local: no cloud, no account, no telemetry.
 | Claude Code (CLI) | ✅ | ✅ | Full support |
 | Codex (CLI) | ✅ | ✅ | Desktop app needs to trust hooks in-app |
 | Gemini CLI | ✅ | — | Native hooks; monitoring only |
-| Qoder / Qwen Code | ✅ | ✅ | Claude-compatible hooks, distinct source IDs |
+| Qwen Code | ✅ | ✅ | Claude-compatible hooks, distinct source IDs |
 | Factory / CodeBuddy | ✅ | ✅ | Claude-compatible hooks, distinct source IDs |
 | Kimi CLI | ✅ | — | Native TOML hook configuration |
 | Cursor | ✅ | — | Native flat hook format |
 | OpenCode | ✅ | ✅ | Native plugin events and permission replies |
+| QoderWork | — | — | Current version doesn't execute external hooks |
 
-> **Note:** Sandboxed desktop apps (Codex Desktop / QoderWork) gate hooks by identity and require trusting Atoll's hooks in-app (see Settings → Integrations). The CLI versions have no such restriction.
+> **Note:** **Codex Desktop** gates hooks by identity and needs Atoll's hooks trusted in-app (see Settings → Integrations). **QoderWork (~0.9.12)** parses a hooks config but does not execute hook commands (verified with a plain-shell canary), so it can't be integrated yet — pending a future version. CLI versions have no such restriction.
 
 ## Requirements
 

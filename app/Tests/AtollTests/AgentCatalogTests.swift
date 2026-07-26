@@ -28,6 +28,12 @@ final class AgentCatalogTests: XCTestCase {
         XCTAssertFalse(AgentCatalog.approveCapableIDs.contains("qoder"))
     }
 
+    func testQoderHasUnavailableNoteAndWorkingAgentsDoNot() {
+        XCTAssertNotNil(AgentCatalog.note("qoder"), "QoderWork limitation must be surfaced")
+        XCTAssertNil(AgentCatalog.note("claude"))
+        XCTAssertNil(AgentCatalog.note("codex"))
+    }
+
     func testApproveCapableSetMatchesDescriptors() {
         let expected = Set(AgentCatalog.all.filter(\.canApprove).map(\.id))
         XCTAssertEqual(AgentCatalog.approveCapableIDs, expected)

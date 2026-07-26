@@ -277,11 +277,12 @@ class PruneOnShrinkTests(unittest.TestCase):
 
 
 class QoderMonitorOnlyTests(unittest.TestCase):
-    def test_qoder_installs_only_supported_events_no_permission_request(self):
+    def test_qoder_installs_only_the_events_it_recognizes(self):
         specs = hooks.CONFIGS["qoder"]["specs"]
         events = {name for name, _matcher, _timeout, _hold in specs}
-        self.assertEqual(events, {"SessionStart", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"})
-        # QoderWork has no PermissionRequest event → nothing may be held for approval.
+        # QoderWork only keeps SessionStart/Stop/SessionEnd (it strips the rest on
+        # launch) and executes none of them; install just those to avoid churn.
+        self.assertEqual(events, {"SessionStart", "Stop", "SessionEnd"})
         self.assertNotIn("PermissionRequest", events)
         self.assertTrue(all(not hold for *_rest, hold in specs), "qoder events are monitor-only")
 

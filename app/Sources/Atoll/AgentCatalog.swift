@@ -21,6 +21,9 @@ struct AgentDescriptor {
     /// Substrings that identify the agent's own app as frontmost (for the
     /// "follow focus" approval routing). Empty = CLI-only, no owning app.
     let frontmostKeywords: [String]
+    /// A known-limitation note shown in Settings (e.g. an app that doesn't
+    /// execute hooks yet). nil when the agent works normally.
+    var note: String? = nil
 }
 
 enum AgentCatalog {
@@ -37,12 +40,13 @@ enum AgentCatalog {
         AgentDescriptor(id: "gemini", displayName: "Gemini CLI",
                         color: Color(red: 0.30, green: 0.85, blue: 0.85),
                         canApprove: false, trustGated: false, frontmostKeywords: ["gemini"]),
-        // QoderWork (desktop) only fires a subset of hook events and has no
-        // PermissionRequest event → monitor-only. Its hook set is declared in
-        // the installer (scripts/install-hooks.py).
+        // QoderWork (desktop ~0.9.12) parses a hooks config but does not execute
+        // hook commands — verified with a plain-shell canary that never fired
+        // after a full restart. Effectively unavailable until it wires execution.
         AgentDescriptor(id: "qoder", displayName: "Qoder",
                         color: Color(red: 0.65, green: 0.45, blue: 1.0),
-                        canApprove: false, trustGated: true, frontmostKeywords: ["qoder"]),
+                        canApprove: false, trustGated: true, frontmostKeywords: ["qoder"],
+                        note: "QoderWork 当前版本不执行外部 hooks，暂无法接入监控（等待其后续版本支持）。"),
         AgentDescriptor(id: "qwen", displayName: "Qwen Code",
                         color: Color(red: 0.75, green: 0.52, blue: 0.98),
                         canApprove: true, trustGated: false, frontmostKeywords: []),
@@ -76,6 +80,8 @@ enum AgentCatalog {
     static func trustGated(_ id: String) -> Bool { byID[id]?.trustGated ?? false }
 
     static func frontmostKeywords(_ id: String) -> [String] { byID[id]?.frontmostKeywords ?? [] }
+
+    static func note(_ id: String) -> String? { byID[id]?.note }
 
     /// Sources that can broker approvals — drives both the gateway's held-request
     /// parsing set and the Settings approval-routing picker.

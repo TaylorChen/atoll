@@ -36,13 +36,14 @@
 | Claude Code (CLI) | ✅ | ✅ | 完整支持 |
 | Codex (CLI) | ✅ | ✅ | 桌面版需在应用内信任 hooks |
 | Gemini CLI | ✅ | — | 原生 Hook，仅监控 |
-| Qoder / Qwen Code | ✅ | ✅ | Claude 兼容 Hook，各自独立标识 |
+| Qwen Code | ✅ | ✅ | Claude 兼容 Hook，各自独立标识 |
 | Factory / CodeBuddy | ✅ | ✅ | Claude 兼容 Hook，各自独立标识 |
 | Kimi CLI | ✅ | — | 原生 TOML Hook 配置 |
 | Cursor | ✅ | — | 原生扁平 Hook 格式 |
 | OpenCode | ✅ | ✅ | 原生插件事件与审批回复 |
+| QoderWork | — | — | 当前版本不执行外部 hooks，暂无法接入 |
 
-> **注意**：Codex Desktop / QoderWork 等**沙箱化桌面应用**按 hook 身份做信任门控，需要在应用内信任 Atoll 的 hooks（详见设置 → 集成的提示）。CLI 版无此限制。
+> **注意**：**Codex Desktop** 等沙箱化桌面应用按 hook 身份做信任门控，需要在应用内信任 Atoll 的 hooks（详见设置 → 集成）。**QoderWork（约 0.9.12）** 会解析 hooks 配置但不执行 hook 命令（已用纯 shell 探针验证），因此暂无法接入，待其后续版本支持。CLI 版本无此限制。
 
 ## 环境要求
 

@@ -65,16 +65,17 @@ CONFIGS = {
         ],
     },
     # Qoder mirrors the Claude hook format (PascalCase events + nested hooks).
-    # QoderWork (desktop, Electron) only fires a subset of hook events — its app
-    # bundle has no PermissionRequest / UserPromptSubmit / SubagentStop event, so
-    # installing those either does nothing or breaks the whole hooks block.
-    # Monitor-only: the events it actually supports, none held for approval.
+    # QoderWork (desktop, Electron ~0.9.12) parses and normalizes a hooks config
+    # but does NOT execute external hook commands — verified with a plain-shell
+    # canary that never fired after a full app restart. It also rewrites the file
+    # on launch, keeping only the events it recognizes (SessionStart/Stop/
+    # SessionEnd) and stripping the rest. We install only those 3 to avoid config
+    # churn; monitoring is effectively unavailable until QoderWork wires hook
+    # execution (surfaced to the user via AgentCatalog.note).
     "qoder": {
         "path": Path.home() / ".qoder" / "settings.json",
         "specs": [
             ("SessionStart", None, 10, False),
-            ("PreToolUse", "*", 10, False),
-            ("PostToolUse", "*", 10, False),
             ("Stop", None, 10, False),
             ("SessionEnd", None, 10, False),
         ],

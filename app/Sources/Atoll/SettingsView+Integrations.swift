@@ -45,9 +45,14 @@ extension SettingsView {
                                 .labelsHidden()
                                 .disabled(!cli.cliPresent || !hooks.workingSource.isEmpty)
                         }
-                        Text(cli.supportsApproval ? "能力：会话监控 · 原生协议审批" : "能力：会话监控")
+                        Text(AgentCatalog.note(cli.id) != nil ? "能力：暂不可用"
+                             : cli.supportsApproval ? "能力：会话监控 · 原生协议审批" : "能力：会话监控")
                             .font(.caption2).foregroundStyle(.secondary)
-                        if !diagnosticText(cli).isEmpty {
+                        if let note = AgentCatalog.note(cli.id) {
+                            Label(note, systemImage: "info.circle")
+                                .font(.caption2).foregroundStyle(.orange)
+                        }
+                        if AgentCatalog.note(cli.id) == nil, !diagnosticText(cli).isEmpty {
                             Label(diagnosticText(cli), systemImage: cli.healthy ? "clock" : "exclamationmark.triangle.fill")
                                 .font(.caption2)
                                 .foregroundStyle(cli.healthy ? Color.secondary : Color.red)
