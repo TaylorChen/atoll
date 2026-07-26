@@ -1,10 +1,42 @@
 import SwiftUI
 
+enum PanelGeometryDefaults {
+    static let panelWidth = 600.0
+    static let panelHeight = 560.0
+    /// Content width; NotchShape adds a 7pt decorative wing on each side.
+    static let notchWidth = 182.0
+    static let notchHeight = 26.0
+
+    private static let migrationVersionKey = "panelGeometryDefaultsVersion"
+    private static let currentMigrationVersion = 2
+    private static let legacyNotchWidths = [190.0, 240.0, 260.0]
+    private static let legacyNotchHeights = [30.0, 36.0]
+
+    /// Migrate only values that still equal the previous defaults. Custom sizes
+    /// remain untouched; missing keys naturally pick up the new fallbacks.
+    static func migrate(_ defaults: UserDefaults) {
+        guard defaults.integer(forKey: migrationVersionKey) < currentMigrationVersion else { return }
+        if let stored = defaults.object(forKey: "notchWidth") as? NSNumber,
+           legacyNotchWidths.contains(stored.doubleValue) {
+            defaults.set(notchWidth, forKey: "notchWidth")
+        }
+        if let stored = defaults.object(forKey: "notchHeight") as? NSNumber,
+           legacyNotchHeights.contains(stored.doubleValue) {
+            defaults.set(notchHeight, forKey: "notchHeight")
+        }
+        defaults.set(currentMigrationVersion, forKey: migrationVersionKey)
+    }
+}
+
 /// Central, UserDefaults-backed preferences.
 /// Panel geometry defaults are tuned for a comfortable footprint.
 @MainActor
 final class Settings: ObservableObject {
     static let shared = Settings()
+
+    private init() {
+        PanelGeometryDefaults.migrate(.standard)
+    }
 
     private func d<T>(_ key: String, _ fallback: T) -> T {
         UserDefaults.standard.object(forKey: key) as? T ?? fallback
@@ -15,13 +47,13 @@ final class Settings: ObservableObject {
     }
 
     // MARK: Display — panel geometry
-    var panelWidth: Double { get { d("panelWidth", 600) } set { set("panelWidth", newValue) } }
-    var panelHeight: Double { get { d("panelHeight", 560) } set { set("panelHeight", newValue) } }
-    var notchWidth: Double { get { d("notchWidth", 260) } set { set("notchWidth", newValue) } }
-    var notchHeight: Double { get { d("notchHeight", 30) } set { set("notchHeight", newValue) } }
+    var panelWidth: Double { get { d("panelWidth", PanelGeometryDefaults.panelWidth) } set { set("panelWidth", newValue) } }
+    var panelHeight: Double { get { d("panelHeight", PanelGeometryDefaults.panelHeight) } set { set("panelHeight", newValue) } }
+    var notchWidth: Double { get { d("notchWidth", PanelGeometryDefaults.notchWidth) } set { set("notchWidth", newValue) } }
+    var notchHeight: Double { get { d("notchHeight", PanelGeometryDefaults.notchHeight) } set { set("notchHeight", newValue) } }
     var displayScreenID: String { get { d("displayScreenID", "primary") } set { set("displayScreenID", newValue) } }
     var collapsedStyle: CollapsedStyle {
-        get { CollapsedStyle(rawValue: d("collapsedStyle", CollapsedStyle.detailed.rawValue)) ?? .detailed }
+        get { CollapsedStyle(rawValue: d("collapsedStyle", CollapsedStyle.compact.rawValue)) ?? .compact }
         set { set("collapsedStyle", newValue.rawValue) }
     }
 
@@ -38,7 +70,7 @@ final class Settings: ObservableObject {
     var expandOnComplete: Bool { get { d("expandOnComplete", true) } set { set("expandOnComplete", newValue) } }
     var collapseDwell: Double { get { d("collapseDwell", 0.4) } set { set("collapseDwell", newValue) } }
     var completionDwell: Double { get { d("completionDwell", 4.0) } set { set("completionDwell", newValue) } }
-    var hoverExpandDelay: Double { get { d("hoverExpandDelay", 0.2) } set { set("hoverExpandDelay", newValue) } }
+    var hoverExpandDelay: Double { get { d("hoverExpandDelay", 0.15) } set { set("hoverExpandDelay", newValue) } }
     var clickSessionToJump: Bool { get { d("clickSessionToJump", true) } set { set("clickSessionToJump", newValue) } }
     var suppressCompletionPopupWhenAgentFrontmost: Bool { get { d("suppressCompletionPopupWhenAgentFrontmost", true) } set { set("suppressCompletionPopupWhenAgentFrontmost", newValue) } }
 

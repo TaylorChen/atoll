@@ -2,6 +2,62 @@ import AppKit
 import Combine
 import SwiftUI
 
+enum NotchGeometry {
+    /// Keep the collapsed corner shallow, then double the radius when expanded
+    /// so the much wider panel still blends smoothly into the menu bar.
+    static let collapsedWingWidth: CGFloat = 7
+    static let expandedWingWidth: CGFloat = 14
+    static let hoverMargin: CGFloat = 2
+    static let detailedWindowWidth: CGFloat = 372
+
+    static func windowSize(
+        contentWidth: CGFloat,
+        height: CGFloat,
+        wingWidth: CGFloat = collapsedWingWidth
+    ) -> NSSize {
+        NSSize(width: contentWidth + 2 * wingWidth, height: height)
+    }
+
+    /// Prefer AppKit's physical camera-housing geometry. On displays without a
+    /// notch, use the compact fallback tuned for the native menu-bar footprint.
+    static func collapsedWindowSize(
+        style: CollapsedStyle,
+        fallbackContentWidth: CGFloat,
+        fallbackHeight: CGFloat,
+        safeAreaTop: CGFloat,
+        auxiliaryLeftMaxX: CGFloat?,
+        auxiliaryRightMinX: CGFloat?
+    ) -> NSSize {
+        var size = windowSize(contentWidth: fallbackContentWidth, height: fallbackHeight)
+        if safeAreaTop > 0,
+           let left = auxiliaryLeftMaxX,
+           let right = auxiliaryRightMinX,
+           right > left {
+            size = NSSize(width: right - left, height: safeAreaTop)
+        }
+        if style == .detailed {
+            size.width = max(size.width, detailedWindowWidth)
+        }
+        return size
+    }
+
+    static func frame(screenFrame: NSRect, size: NSSize) -> NSRect {
+        NSRect(x: screenFrame.midX - size.width / 2,
+               y: screenFrame.maxY - size.height,
+               width: size.width,
+               height: size.height)
+    }
+
+    /// The decorative wings do not respond to hover in the collapsed state.
+    /// Once expanded, the full panel remains interactive.
+    static func interactionFrame(targetFrame: NSRect, expanded: Bool) -> NSRect {
+        let body = expanded
+            ? targetFrame
+            : targetFrame.insetBy(dx: collapsedWingWidth, dy: 0)
+        return body.insetBy(dx: -hoverMargin, dy: -hoverMargin)
+    }
+}
+
 /// Top-centre floating bar (notch-style overlay for displays without a notch).
 /// Non-activating: it never steals focus from the editor or terminal.
 /// Collapsed = live status pill; expands on hover or when a pending request
@@ -19,13 +75,35 @@ final class NotchPanel {
     private var hiddenForIdle = false
     private var lastFullscreenCheck = Date.distantPast
 
-    // Same width for both states so expansion is purely vertical — the panel
-    // never slides sideways (a real Dynamic Island grows from a fixed footprint).
-    // Widths come from Settings; expanded uses the full width,
-    // collapsed centers a narrow pill within that same width.
+    private static var selectedScreen: NSScreen? {
+        let selected = Settings.shared.displayScreenID
+        if selected != "primary",
+           let match = NSScreen.screens.first(where: { DisplayPolicy.screenID($0) == selected }) {
+            return match
+        }
+        return NSScreen.screens.first { $0.frame.origin == .zero } ?? NSScreen.screens.first
+    }
+
     static var panelWidth: CGFloat { CGFloat(Settings.shared.panelWidth) }
-    static var collapsedSize: NSSize { NSSize(width: panelWidth, height: CGFloat(Settings.shared.notchHeight)) }
-    static var expandedSize: NSSize { NSSize(width: panelWidth, height: CGFloat(Settings.shared.panelHeight)) }
+    static var collapsedSize: NSSize {
+        let screen = selectedScreen
+        return NotchGeometry.collapsedWindowSize(
+            style: Settings.shared.collapsedStyle,
+            fallbackContentWidth: CGFloat(Settings.shared.notchWidth),
+            fallbackHeight: CGFloat(Settings.shared.notchHeight),
+            safeAreaTop: screen?.safeAreaInsets.top ?? 0,
+            auxiliaryLeftMaxX: screen?.auxiliaryTopLeftArea?.maxX,
+            auxiliaryRightMinX: screen?.auxiliaryTopRightArea?.minX)
+    }
+    static var collapsedContentWidth: CGFloat {
+        max(1, collapsedSize.width - 2 * NotchGeometry.collapsedWingWidth)
+    }
+    static var expandedSize: NSSize {
+        NotchGeometry.windowSize(
+            contentWidth: panelWidth,
+            height: CGFloat(Settings.shared.panelHeight),
+            wingWidth: NotchGeometry.expandedWingWidth)
+    }
 
     /// Height the expanded panel should currently be, based on measured content
     /// (clamped to the configured max). Lets the panel fit content and only
@@ -34,7 +112,7 @@ final class NotchPanel {
 
     private var expandedFrameSize: NSSize {
         let h = dynamicExpandedHeight > 0 ? dynamicExpandedHeight : Self.expandedSize.height
-        return NSSize(width: Self.panelWidth, height: h)
+        return NSSize(width: Self.expandedSize.width, height: h)
     }
 
     private func updateExpandedHeight(_ h: CGFloat) {
@@ -42,7 +120,7 @@ final class NotchPanel {
         guard abs(clamped - dynamicExpandedHeight) > 1 else { return }
         dynamicExpandedHeight = clamped
         if store.notchExpanded {
-            reposition(size: NSSize(width: Self.panelWidth, height: clamped))
+            reposition(size: NSSize(width: Self.expandedSize.width, height: clamped))
         }
     }
 
@@ -144,12 +222,13 @@ final class NotchPanel {
     private var outsideSince: Date?
     private var insideSince: Date?
 
-    /// True when the cursor is within the panel's current frame (plus a small
-    /// margin). Expand on enter; collapse only after the cursor stays out for a
-    /// dwell — so brief edge excursions don't close the panel.
+    /// Expand only from the visible collapsed body. Once open, the complete
+    /// panel is interactive. Collapse waits for the configured leave dwell.
     private func pollHover() {
         updateFullscreenVisibility()
-        let hot = (targetFrame == .zero ? panel.frame : targetFrame).insetBy(dx: -4, dy: -4)
+        let frame = targetFrame == .zero ? panel.frame : targetFrame
+        let hot = NotchGeometry.interactionFrame(
+            targetFrame: frame, expanded: store.notchExpanded)
         let inside = hot.contains(NSEvent.mouseLocation)
         if store.notchHovering != inside { store.notchHovering = inside }
         if inside {
@@ -225,14 +304,7 @@ final class NotchPanel {
     /// The screen the panel lives on. Pinned to the menu-bar (primary) screen —
     /// NOT NSScreen.main, which follows keyboard focus and makes the panel jump
     /// between monitors on multi-display setups (breaking hover detection).
-    private var homeScreen: NSScreen? {
-        let selected = Settings.shared.displayScreenID
-        if selected != "primary",
-           let match = NSScreen.screens.first(where: { DisplayPolicy.screenID($0) == selected }) {
-            return match
-        }
-        return NSScreen.screens.first { $0.frame.origin == .zero } ?? NSScreen.screens.first
-    }
+    private var homeScreen: NSScreen? { Self.selectedScreen }
 
     /// The frame the panel is settling toward — hover detection uses this, not
     /// the live (mid-animation) panel.frame, so a quick move during the open/close
@@ -241,14 +313,11 @@ final class NotchPanel {
 
     private func reposition(size: NSSize) {
         guard let screen = homeScreen else { return }
-        let frame = screen.frame
-        let origin = NSPoint(x: frame.midX - size.width / 2,
-                             y: frame.maxY - size.height)
-        targetFrame = NSRect(origin: origin, size: size)
-        // Snappy animation (~0.18s) instead of NSWindow's slow default.
+        targetFrame = NotchGeometry.frame(screenFrame: screen.frame, size: size)
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = Tuning.panelAnimation
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            ctx.timingFunction = CAMediaTimingFunction(
+                controlPoints: 0.2, 0.9, 0.25, 1)
             panel.animator().setFrame(targetFrame, display: true)
         }
     }
@@ -299,12 +368,18 @@ struct NotchView: View {
                         maxHeight: CGFloat(Settings.shared.panelHeight) - chromeHeight,
                         onHeight: { listH in onHeightChange(chromeHeight + listH) })
                 }
-                .frame(width: NotchPanel.expandedSize.width, alignment: .top)
-                .background(Theme.bg, in: UnevenRoundedRectangle(bottomLeadingRadius: 18, bottomTrailingRadius: 18))
+                .frame(width: NotchPanel.panelWidth, alignment: .top)
+                .padding(.horizontal, NotchGeometry.expandedWingWidth)
+                .background(Theme.bg, in: NotchShape(
+                    topRadius: NotchGeometry.expandedWingWidth,
+                    bottomRadius: 14))
+                .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             } else {
                 collapsedPill
+                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
             }
         }
+        .animation(.easeOut(duration: 0.16), value: store.notchExpanded)
         // Hover is handled by NotchPanel's cursor-geometry polling, not .onHover
         // (which flickers during the expand animation).
     }
@@ -337,39 +412,52 @@ struct NotchView: View {
         .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 4)
     }
 
-    /// Live pill: per-agent animated buddy + the most recent activity line.
-    /// The black capsule is centered inside the full 440-wide (transparent)
-    /// frame so the panel width never changes between states — no sideways slide.
+    /// Compact native status line: one primary Agent, its current action, and a
+    /// count. Do not render one icon per session here; that makes the collapsed
+    /// island noisy and wider than the camera housing.
     private var collapsedPill: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
-            HStack(spacing: 7) {
-                AnimatedCoral(working: anyWorking, size: 13)
-                ForEach(store.sorted.prefix(Settings.shared.collapsedStyle == .compact ? 3 : 4)) { s in
-                    AgentBuddy(source: s.source, state: s.state, size: 10)
+            HStack(spacing: 5) {
+                if let session = primarySession {
+                    AgentBuddy(source: session.source, state: session.state, size: 9)
                 }
-                if Settings.shared.collapsedStyle == .detailed {
-                    Text(activitySummary)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
-                        .foregroundStyle(Theme.textPrimary)
-                        .lineLimit(1)
+                if anyWorking {
+                    Image(systemName: "terminal.fill")
+                        .font(.system(size: 7, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
                 }
+                Text(activitySummary)
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer(minLength: 3)
                 if store.pending.count > 0 {
-                    Text("🔔\(store.pending.count)")
-                        .font(.system(size: 10))
+                    Text("\(store.pending.count)")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.red)
                 } else if store.hasAttentionState {
                     Circle().fill(Color.red).frame(width: 6, height: 6)
                 } else if activeCount > 0 {
-                    Text("\(activeCount)")
-                        .font(.system(size: 10, design: .monospaced))
+                    Text(Settings.shared.collapsedStyle == .detailed
+                         ? "\(activeCount) 个会话" : "\(activeCount)")
+                        .font(.system(size: 9, design: .monospaced))
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
-            .padding(.horizontal, 12)
-            .frame(maxWidth: CGFloat(Settings.shared.notchWidth))
-            .frame(height: NotchPanel.collapsedSize.height)
-            .background(Theme.bg, in: UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10))
-            .frame(width: NotchPanel.panelWidth, height: NotchPanel.collapsedSize.height)
+            .padding(.horizontal, 10)
+            .frame(width: NotchPanel.collapsedContentWidth,
+                   height: NotchPanel.collapsedSize.height)
+            .padding(.horizontal, NotchGeometry.collapsedWingWidth)
+            .background(Theme.bg, in: NotchShape(
+                topRadius: NotchGeometry.collapsedWingWidth,
+                bottomRadius: 8))
         }
+    }
+
+    private var primarySession: AgentSession? {
+        store.sorted.first(where: { $0.state != .ended && $0.state != .done })
+            ?? store.sorted.first
     }
 
     private var anyWorking: Bool {
@@ -383,11 +471,12 @@ struct NotchView: View {
     }
 
     private var activitySummary: String {
-        guard let s = store.sorted.first(where: { $0.state != .ended && $0.state != .done }) ?? store.sorted.first else {
-            return "空闲"
-        }
+        guard let s = primarySession else { return "空闲" }
         if !s.currentTool.isEmpty { return s.currentTool }
-        return "\(s.projectName) · \(s.state.label)"
+        if Settings.shared.collapsedStyle == .detailed {
+            return "\(s.displayTitle) · \(s.state.label)"
+        }
+        return s.state.label
     }
 
     private func color(for state: SessionState) -> Color {

@@ -26,11 +26,15 @@ extension SettingsView {
             Section("面板尺寸") {
                 slider("展开宽度", value: bind(\.panelWidth), range: 380...760, unit: "pt")
                 slider("展开高度", value: bind(\.panelHeight), range: 320...760, unit: "pt")
-                slider("灵动岛宽度", value: bind(\.notchWidth), range: 160...440, unit: "pt")
-                slider("灵动岛高度", value: bind(\.notchHeight), range: 22...44, unit: "pt")
+                slider("紧凑岛体宽度", value: bind(\.notchWidth), range: 150...420, unit: "pt")
+                slider("灵动岛高度", value: bind(\.notchHeight), range: 22...40, unit: "pt")
+                Text("带物理刘海的屏幕优先采用 macOS 安全区域尺寸；这里的值用于无刘海屏幕。详细样式会自动使用更宽的岛体。")
+                    .font(.caption).foregroundStyle(.secondary)
                 Button("恢复默认尺寸") {
-                    settings.panelWidth = 600; settings.panelHeight = 560
-                    settings.notchWidth = 260; settings.notchHeight = 30
+                    settings.panelWidth = PanelGeometryDefaults.panelWidth
+                    settings.panelHeight = PanelGeometryDefaults.panelHeight
+                    settings.notchWidth = PanelGeometryDefaults.notchWidth
+                    settings.notchHeight = PanelGeometryDefaults.notchHeight
                 }
             }
             Section("会话卡片") {

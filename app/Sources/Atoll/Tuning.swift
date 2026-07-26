@@ -16,8 +16,8 @@ enum Tuning {
 
     /// NotchPanel: cursor-geometry hover poll (replaces flickery SwiftUI onHover).
     static let hoverPollInterval: TimeInterval = 0.15
-    /// NotchPanel: expand/collapse animation duration.
-    static let panelAnimation: TimeInterval = 0.18
+    /// NotchPanel: short, damped width-and-height transition.
+    static let panelAnimation: TimeInterval = 0.28
 
     /// Gateway: hold a card back this long before surfacing it, so auto-resolved
     /// (auto/bypass) requests close without flicker.
