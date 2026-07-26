@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP="build/Atoll.app"
-VERSION="1.0.0"
+VERSION="1.0.1"
 
 echo "→ Release 构建 App + bridge…"
 ( cd app && swift build -c release )
