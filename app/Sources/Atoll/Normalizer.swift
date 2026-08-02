@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 // MARK: - Normalization
@@ -116,8 +117,11 @@ enum Normalizer {
         let cwd = payload["cwd"] as? String ?? form["cwd"] ?? ""
         let tty = form["tty"] ?? ""
         // Gemini payloads may lack a session id; derive a stable key.
+        // String.hashValue is seeded per-process (SipHash), so it must not be
+        // used here: a key that changes across launches would desync restored
+        // snapshots from newly arrived events after a restart.
         let sessionKey = (payload["session_id"] as? String)
-            ?? "gemini-\(cwd)-\(tty)".hashValue.description
+            ?? stableSessionKey(cwd: cwd, tty: tty)
         let eventName = (payload["hook_event_name"] as? String)
             ?? (payload["event"] as? String) ?? ""
         var kind: EventKind = .other
@@ -153,6 +157,16 @@ enum Normalizer {
             fh.write(Data(line.utf8))
             try? fh.close()
         }
+    }
+
+    /// Deterministic session key for agents that don't provide a session id
+    /// (Gemini). SHA-256 keeps it stable across process launches and collapses
+    /// long paths; 12 bytes (96 bits) make collisions negligible here.
+    static func stableSessionKey(cwd: String, tty: String) -> String {
+        let raw = "gemini|\(cwd)|\(tty)"
+        let digest = SHA256.hash(data: Data(raw.utf8))
+        let hex = digest.prefix(12).map { String(format: "%02x", $0) }.joined()
+        return "gemini-\(hex)"
     }
 
     /// Claude Code hook payload → NormalizedEvent.
