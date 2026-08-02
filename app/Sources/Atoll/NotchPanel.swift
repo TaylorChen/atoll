@@ -370,6 +370,14 @@ struct NotchView: View {
                 }
                 .frame(width: NotchPanel.panelWidth, alignment: .top)
                 .padding(.horizontal, NotchGeometry.expandedWingWidth)
+                // The content layer carries its own rectangular backgrounds
+                // (SessionListView, UsageBar), and .background(in: shape) only
+                // clips the background, not the content. Clip the whole expanded
+                // surface to the same outline so the bottom-left/right corners
+                // stay rounded instead of being overpainted as right angles.
+                .clipShape(NotchShape(
+                    topRadius: NotchGeometry.expandedWingWidth,
+                    bottomRadius: 14))
                 .background(Theme.bg, in: NotchShape(
                     topRadius: NotchGeometry.expandedWingWidth,
                     bottomRadius: 14))
