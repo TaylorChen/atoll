@@ -6,10 +6,13 @@
 - Backs up existing configuration before each modification.
 - `--remove` strips all atoll entries and nothing else.
 """
+import fcntl
 import json
+import os
 import shutil
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 FINGERPRINT = ".atoll/"
@@ -141,6 +144,24 @@ OPENCODE_DIR = Path.home() / ".config" / "opencode"
 OPENCODE_PLUGIN = OPENCODE_DIR / "plugins" / "atoll.js"
 OPENCODE_ASSET = Path(__file__).with_name("atoll-opencode.js")
 ENABLED_FILE = Path.home() / ".atoll" / "cache" / "enabled-integrations.json"
+LOCK_FILE = Path.home() / ".atoll" / "cache" / "install.lock"
+
+
+@contextmanager
+def install_lock():
+    """Serialize read-modify-write cycles across concurrent invocations
+    (HookWatcher --restore, Settings toggles, CLI runs). The atomic tmp+replace
+    writes only protect a single write; without an exclusive lock two processes
+    can interleave their read-modify-write and silently lose each other's
+    entries (or append duplicate Atoll hooks)."""
+    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(LOCK_FILE, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 
 def opencode_config_path() -> Path:
@@ -667,8 +688,15 @@ def process_extra_dirs(source_filter, remove: bool) -> None:
 
 def main() -> None:
     if "--status" in sys.argv:
+        # Read-only diagnostic; configs are replaced atomically so it can run
+        # without the lock.
         status()
         return
+    with install_lock():
+        run_mutations()
+
+
+def run_mutations() -> None:
     if "--extra-status" in sys.argv:
         print(json.dumps(extra_dirs_status()))
         return

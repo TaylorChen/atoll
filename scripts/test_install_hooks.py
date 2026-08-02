@@ -1,6 +1,11 @@
 import importlib.util
 import json
+import os
+import subprocess
+import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -26,6 +31,69 @@ class InstallHooksTests(unittest.TestCase):
                 self.assertEqual(json.loads(hooks.ENABLED_FILE.read_text()), ["claude", "qwen"])
             finally:
                 hooks.ENABLED_FILE = old
+
+    def test_install_lock_serializes_critical_sections(self):
+        """The flock wrapper must give mutual exclusion even between threads of
+        the same process (two open() fds contend independently). Without it the
+        read-modify-write loop below loses updates."""
+        with tempfile.TemporaryDirectory() as tmp:
+            old = hooks.LOCK_FILE
+            hooks.LOCK_FILE = Path(tmp) / "install.lock"
+            try:
+                counter = {"v": 0}
+
+                def critical():
+                    with hooks.install_lock():
+                        v = counter["v"]
+                        time.sleep(0.01)
+                        counter["v"] = v + 1
+
+                threads = [threading.Thread(target=critical) for _ in range(8)]
+                for t in threads:
+                    t.start()
+                for t in threads:
+                    t.join()
+                self.assertEqual(counter["v"], 8,
+                                 "critical sections must be mutually exclusive")
+            finally:
+                hooks.LOCK_FILE = old
+
+    def test_concurrent_cli_installs_do_not_duplicate_hooks(self):
+        """Race four real install-hooks.py processes against one fresh config
+        dir. With the install lock they serialize; without it, read-modify-write
+        interleaving appends duplicate Atoll hook entries."""
+        script = Path(__file__).with_name("install-hooks.py")
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, HOME=tmp)
+            procs = [
+                subprocess.Popen([sys.executable, str(script), "--only", "claude"],
+                                 env=env, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+                for _ in range(4)
+            ]
+            for p in procs:
+                self.assertEqual(p.wait(), 0, "installer must exit 0 under contention")
+
+            cfg = json.loads((Path(tmp) / ".claude" / "settings.json").read_text())
+            # The claude spec legitimately has two PreToolUse entries (monitor *
+            # + held AskUserQuestion), so assert each (event, matcher) pair from
+            # the spec appears exactly once — no duplicates from racy installs,
+            # and nothing silently lost either.
+            expected = {}
+            for event, matcher, _t, _h in hooks.CONFIGS["claude"]["specs"]:
+                expected[(event, matcher)] = expected.get((event, matcher), 0) + 1
+            actual = {}
+            for event, entries in cfg["hooks"].items():
+                for e in entries:
+                    if hooks.is_atoll(e):
+                        key = (event, e.get("matcher"))
+                        actual[key] = actual.get(key, 0) + 1
+            self.assertEqual(actual, expected,
+                             "each spec entry must appear exactly once after racing installs")
+            # The enabled manifest must also be a consistent single write.
+            enabled = json.loads(
+                (Path(tmp) / ".atoll" / "cache" / "enabled-integrations.json").read_text())
+            self.assertEqual(enabled, ["claude"])
 
     def test_json_hook_install_preserves_existing_entries(self):
         with tempfile.TemporaryDirectory() as tmp:
