@@ -60,11 +60,13 @@ CONFIGS = {
         ],
     },
     # Only events proven safe on this machine's gemini version (Orca uses the same).
+    # Unlike every other source here, Gemini CLI reads `timeout` in milliseconds
+    # (confirmed from its installed bundle), not seconds — these values are ms.
     "gemini": {
         "path": Path.home() / ".gemini" / "settings.json",
         "specs": [
-            ("BeforeAgent", None, 10, False),
-            ("AfterAgent", None, 10, False),
+            ("BeforeAgent", None, 10000, False),
+            ("AfterAgent", None, 10000, False),
         ],
     },
     # Qoder mirrors the Claude hook format (PascalCase events + nested hooks).
