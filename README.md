@@ -73,6 +73,7 @@ Atoll 把所有 Agent 的状态收进屏幕顶部的一个小岛：
 | Gemini CLI | ✅ | — | 原生 Hook，仅监控 |
 | Kimi CLI | ✅ | — | 原生 TOML Hook 配置 |
 | Cursor | ✅ | — | 原生扁平 Hook 格式 |
+| Pi | ✅ | — | 原生 TypeScript 扩展，仅监控 |
 | QoderWork | — | — | 当前版本不执行外部 hooks，暂无法接入 |
 
 > **注意**：**Codex Desktop** 等沙箱化桌面应用按 hook 身份做信任门控，需要在应用内信任 Atoll 的 hooks（详见设置 → 集成）。**QoderWork（约 0.9.12）** 会解析 hooks 配置但不执行 hook 命令（已用纯 shell 探针验证），待其后续版本支持。
@@ -136,7 +137,7 @@ sequenceDiagram
 - `app/` — Swift macOS App（SPM）：NWListener HTTP 网关 + 会话状态机 + SwiftUI 灵动岛；不占 Dock 与菜单栏。
 - `scripts/` — `install-hooks.py`（hooks 安装 / 卸载）、`build-app.sh`（打包 .app）、`atoll-ssh.sh`（SSH 远程）、`render-screenshots.sh`（重新生成 README 截图）。
 
-各 Agent 的 Hook 协议并不相同（Claude 兼容 JSON、Codex 专用决策结构、Cursor / Gemini 原生事件、Kimi TOML、OpenCode 插件），差异和调研记录见 [AGENTS.md](AGENTS.md)。
+各 Agent 的 Hook 协议并不相同（Claude 兼容 JSON、Codex 专用决策结构、Cursor / Gemini 原生事件、Kimi TOML、OpenCode 插件、Pi 扩展），差异和调研记录见 [AGENTS.md](AGENTS.md)。
 
 ## 安全与隐私
 

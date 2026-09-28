@@ -33,7 +33,8 @@ enum Normalizer {
             event = claudeClone(source: source, form: form)
         case "gemini": event = gemini(form: form)
         case "cursor": event = cursor(form: form)
-        case "opencode": event = claudeClone(source: source, form: form)
+        // OpenCode / Pi integrate via plugins that emit Claude-shaped payloads.
+        case "opencode", "pi": event = claudeClone(source: source, form: form)
         default:
             logUnparsed(source: source, form: form)
             return nil

@@ -43,7 +43,7 @@ final class AgentCatalogTests: XCTestCase {
     }
 
     func testMonitorOnlyAgentsAreNotApproveCapable() {
-        for id in ["gemini", "cursor", "kimi", "qoder"] {
+        for id in ["gemini", "cursor", "kimi", "qoder", "pi"] {
             XCTAssertFalse(AgentCatalog.canApprove(id), "\(id) should be monitor-only")
         }
     }

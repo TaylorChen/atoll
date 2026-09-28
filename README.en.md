@@ -75,6 +75,7 @@ Atoll gathers every agent's state into one small island at the top of the screen
 | Gemini CLI | ✅ | — | Native hooks; monitoring only |
 | Kimi CLI | ✅ | — | Native TOML hook configuration |
 | Cursor | ✅ | — | Native flat hook format |
+| Pi | ✅ | — | Native TypeScript extension; monitoring only |
 | QoderWork | — | — | Current version doesn't execute external hooks |
 
 > **Note:** **Codex Desktop** gates hooks by identity and needs Atoll's hooks trusted in-app (Settings → Integrations). **QoderWork (~0.9.12)** parses a hooks config but does not execute hook commands (verified with a plain-shell canary), so it can't be integrated yet.
@@ -138,7 +139,7 @@ sequenceDiagram
 - `app/` — Swift macOS app (SPM): NWListener HTTP gateway + session state machine + SwiftUI island; no Dock or menu-bar icon.
 - `scripts/` — `install-hooks.py` (hook install / uninstall), `build-app.sh` (package the .app), `atoll-ssh.sh` (SSH remote), `render-screenshots.sh` (regenerate README screenshots).
 
-Hook protocols differ per agent (Claude-compatible JSON, Codex-specific decisions, native Cursor / Gemini events, Kimi TOML, an OpenCode plugin); see [AGENTS.md](AGENTS.md) for the details.
+Hook protocols differ per agent (Claude-compatible JSON, Codex-specific decisions, native Cursor / Gemini events, Kimi TOML, an OpenCode plugin, a Pi extension); see [AGENTS.md](AGENTS.md) for the details.
 
 ## Security and privacy
 

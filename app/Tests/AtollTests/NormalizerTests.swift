@@ -116,12 +116,42 @@ final class NormalizerTests: XCTestCase {
     // MARK: - Claude-compatible clones
 
     func testClaudeClonePreservesSourceID() throws {
-        for source in ["qwen", "factory", "codebuddy", "kimi", "opencode"] {
+        for source in ["qwen", "factory", "codebuddy", "kimi", "opencode", "pi"] {
             let ev = try XCTUnwrap(Normalizer.normalize(source: source, form: hookForm([
                 "hook_event_name": "SessionStart", "session_id": "s-\(source)"])))
             XCTAssertEqual(ev.source, source, "source id must survive normalization")
             XCTAssertEqual(ev.sessionKey, "s-\(source)")
         }
+    }
+
+    /// Payloads as emitted by scripts/atoll-pi.ts: Pi tool names are mapped to
+    /// Claude's so the shared parser renders verbs and result summaries.
+    func testPiExtensionPayloads() throws {
+        let tool = try XCTUnwrap(Normalizer.normalize(source: "pi", form: hookForm([
+            "hook_event_name": "PreToolUse", "session_id": "pi-abc", "cwd": "/repo",
+            "model": ["display_name": "Claude Sonnet"], "tool_name": "Bash",
+            "tool_use_id": "call-1", "tool_input": ["command": "go test ./..."]])))
+        XCTAssertEqual(tool.source, "pi")
+        XCTAssertEqual(tool.sessionKey, "pi-abc")
+        XCTAssertEqual(tool.kind, .toolUse)
+        XCTAssertEqual(tool.verb, "运行中")
+        XCTAssertEqual(tool.detail, "go test ./...")
+        XCTAssertEqual(tool.model, "Claude Sonnet")
+        XCTAssertEqual(tool.toolUseID, "call-1")
+
+        let result = try XCTUnwrap(Normalizer.normalize(source: "pi", form: hookForm([
+            "hook_event_name": "PostToolUse", "session_id": "pi-abc",
+            "tool_name": "Bash", "tool_response": "ok  12 passed"])))
+        XCTAssertEqual(result.kind, .toolResult)
+        XCTAssertEqual(result.detail, "ok  12 passed")
+
+        let failure = try XCTUnwrap(Normalizer.normalize(source: "pi", form: hookForm([
+            "hook_event_name": "PostToolUseFailure", "session_id": "pi-abc", "tool_name": "Bash"])))
+        XCTAssertEqual(failure.kind, .toolFailure)
+
+        let stop = try XCTUnwrap(Normalizer.normalize(source: "pi", form: hookForm([
+            "hook_event_name": "Stop", "session_id": "pi-abc"])))
+        XCTAssertEqual(stop.kind, .stop)
     }
 
     // MARK: - Cursor (flat format)

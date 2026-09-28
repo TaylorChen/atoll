@@ -26,6 +26,7 @@ final class HookWatcher {
         NSString(string: "~/.codebuddy").expandingTildeInPath,
         NSString(string: "~/.kimi").expandingTildeInPath,
         NSString(string: "~/.config/opencode").expandingTildeInPath,
+        NSString(string: "~/.pi/agent/extensions").expandingTildeInPath,
     ]
 
     init(store: SessionStore) {

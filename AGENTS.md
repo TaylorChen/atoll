@@ -2,7 +2,7 @@
 
 ## 产品边界
 
-Atoll 是 macOS 顶部浮动面板，用于统一监控 AI 编程 Agent，并在 Agent 支持时处理审批。当前支持：Claude Code、Codex、Cursor、Gemini CLI、Qoder、Qwen Code、Factory、CodeBuddy、Kimi CLI、OpenCode。
+Atoll 是 macOS 顶部浮动面板，用于统一监控 AI 编程 Agent，并在 Agent 支持时处理审批。当前支持：Claude Code、Codex、Cursor、Gemini CLI、Qoder、Qwen Code、Factory、CodeBuddy、Kimi CLI、OpenCode、Pi。
 
 ## 集成架构
 
@@ -13,6 +13,7 @@ Atoll 是 macOS 顶部浮动面板，用于统一监控 AI 编程 Agent，并在
 - Cursor、Gemini CLI：各自原生 Hook 事件。
 - Kimi CLI：Claude 兼容事件，安装配置为 `~/.kimi/config.toml`。
 - OpenCode：使用 `scripts/atoll-opencode.js` 原生插件桥接事件和审批回复。
+- Pi：`scripts/atoll-pi.ts` 扩展安装到 `~/.pi/agent/extensions/atoll.ts`（Pi 自动发现，不改 Pi 配置），把事件转成 Claude 兼容 payload 直接 POST `/hook/pi`，仅监控。首行 `// @atoll-managed-pi-extension` 是所有权标记，安装器拒绝覆盖或删除无标记的同名文件。
 
 审批状态以 Agent 请求为唯一事实来源。Atoll 决策后响应原始挂起连接；Agent 侧先完成时，由匹配的工具事件、轮次结束或连接关闭清理卡片。存在 `tool_use_id` 时必须优先精确匹配，不能只按工具名清理并发请求。
 
@@ -33,6 +34,7 @@ cd app && swift test
 cd bridge && go test ./...
 python3 -m unittest scripts/test_install_hooks.py
 node --check scripts/atoll-opencode.js
+node --experimental-strip-types --check scripts/atoll-pi.ts   # Node 22.6+
 scripts/self-test.sh
 ```
 

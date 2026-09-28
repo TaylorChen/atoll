@@ -145,6 +145,12 @@ KIMI_EVENTS = [
 OPENCODE_DIR = Path.home() / ".config" / "opencode"
 OPENCODE_PLUGIN = OPENCODE_DIR / "plugins" / "atoll.js"
 OPENCODE_ASSET = Path(__file__).with_name("atoll-opencode.js")
+# Pi auto-discovers ~/.pi/agent/extensions/*.ts, so installing is just the file;
+# no Pi config is touched. The marker guards against deleting a user's own file.
+PI_DIR = Path.home() / ".pi" / "agent"
+PI_EXTENSION = PI_DIR / "extensions" / "atoll.ts"
+PI_ASSET = Path(__file__).with_name("atoll-pi.ts")
+PI_MARKER = "// @atoll-managed-pi-extension"
 ENABLED_FILE = Path.home() / ".atoll" / "cache" / "enabled-integrations.json"
 LOCK_FILE = Path.home() / ".atoll" / "cache" / "install.lock"
 
@@ -185,6 +191,8 @@ def integration_installed(source: str) -> bool:
         if not path.exists() or not OPENCODE_PLUGIN.exists():
             return False
         return f"file://{OPENCODE_PLUGIN}" in json.loads(path.read_text()).get("plugin", [])
+    if source == "pi":
+        return pi_extension_managed()
     return False
 
 
@@ -193,7 +201,7 @@ def enabled_integrations() -> set[str]:
         return set(json.loads(ENABLED_FILE.read_text()))
     # Upgrade path: record the integrations already installed by an older Atoll
     # before the watcher attempts any restoration.
-    sources = list(CONFIGS) + ["kimi", "opencode"]
+    sources = list(CONFIGS) + ["kimi", "opencode", "pi"]
     enabled = {source for source in sources if integration_installed(source)}
     ENABLED_FILE.parent.mkdir(parents=True, exist_ok=True)
     ENABLED_FILE.write_text(json.dumps(sorted(enabled), indent=2) + "\n")
@@ -354,6 +362,30 @@ def process_kimi(remove: bool) -> str:
         tmp.write_text(output)
         tmp.replace(KIMI_PATH)
     return "removed" if remove else "installed"
+
+
+def pi_extension_managed() -> bool:
+    return PI_EXTENSION.exists() and PI_EXTENSION.read_text().startswith(PI_MARKER)
+
+
+def process_pi(remove: bool) -> str:
+    if PI_EXTENSION.exists() and not pi_extension_managed():
+        raise RuntimeError(f"refusing to overwrite a Pi extension Atoll didn't install: {PI_EXTENSION}")
+    if remove:
+        if not PI_EXTENSION.exists():
+            return "unchanged"
+        PI_EXTENSION.unlink()
+        return "removed"
+    if not PI_ASSET.exists():
+        raise FileNotFoundError(f"missing Pi extension asset: {PI_ASSET}")
+    asset = PI_ASSET.read_bytes()
+    if PI_EXTENSION.exists() and PI_EXTENSION.read_bytes() == asset:
+        return "unchanged"
+    PI_EXTENSION.parent.mkdir(parents=True, exist_ok=True)
+    tmp = PI_EXTENSION.with_suffix(".ts.atoll-tmp")
+    tmp.write_bytes(asset)
+    tmp.replace(PI_EXTENSION)
+    return "installed"
 
 
 def process_opencode(remove: bool) -> str:
@@ -531,6 +563,28 @@ def status() -> None:
         "missingHooks": 0 if open_installed else 1,
         "configPath": str(open_config),
         "error": open_error,
+    }
+    pi_error = ""
+    pi_installed = False
+    pi_current = False
+    try:
+        pi_installed = pi_extension_managed()
+        pi_current = pi_installed and PI_ASSET.exists() and PI_EXTENSION.read_bytes() == PI_ASSET.read_bytes()
+    except OSError as exc:
+        pi_error = f"config-invalid: {exc}"
+    if PI_EXTENSION.exists() and not pi_installed and not pi_error:
+        pi_error = "config-invalid: atoll.ts exists but is not managed by Atoll"
+    out["pi"] = {
+        "installed": pi_installed,
+        "enabled": "pi" in desired or (not ENABLED_FILE.exists() and pi_installed),
+        # The extension posts to the gateway itself; the Go bridge isn't used.
+        "healthy": pi_current and not pi_error,
+        "cliPresent": PI_DIR.exists(),
+        "bridgePresent": BRIDGE_PATH.is_file(),
+        # An outdated copy counts as missing so --restore refreshes it.
+        "missingHooks": 0 if pi_current else 1,
+        "configPath": str(PI_EXTENSION),
+        "error": pi_error,
     }
     print(json.dumps(out))
 
@@ -740,6 +794,10 @@ def run_mutations() -> None:
         print(f"opencode: {process_opencode(remove)}")
         if not restore:
             record_enabled("opencode", not remove)
+    if (not only or only == "pi") and (restore_sources is None or "pi" in restore_sources):
+        print(f"pi: {process_pi(remove)}")
+        if not restore:
+            record_enabled("pi", not remove)
     # Extra config directories only ever process on explicit enable — restore
     # (HookWatcher) only touches the standard, explicitly-enabled locations.
     if not restore:

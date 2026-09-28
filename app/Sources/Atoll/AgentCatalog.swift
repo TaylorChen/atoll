@@ -62,6 +62,10 @@ enum AgentCatalog {
         AgentDescriptor(id: "opencode", displayName: "OpenCode",
                         color: Color(red: 0.20, green: 0.80, blue: 0.72),
                         canApprove: true, trustGated: false, frontmostKeywords: []),
+        // Pi has no native permission prompt; the extension is monitoring only.
+        AgentDescriptor(id: "pi", displayName: "Pi",
+                        color: Color(red: 0.95, green: 0.78, blue: 0.30),
+                        canApprove: false, trustGated: false, frontmostKeywords: []),
     ]
 
     private static let byID: [String: AgentDescriptor] =

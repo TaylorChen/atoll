@@ -19,6 +19,7 @@ cp app/Resources/Atoll.icns "$APP/Contents/Resources/Atoll.icns"
 cp build/atoll-bridge "$APP/Contents/Resources/atoll-bridge"
 cp scripts/install-hooks.py "$APP/Contents/Resources/install-hooks.py"
 cp scripts/atoll-opencode.js "$APP/Contents/Resources/atoll-opencode.js"
+cp scripts/atoll-pi.ts "$APP/Contents/Resources/atoll-pi.ts"
 cp scripts/atoll-statusline.sh "$APP/Contents/Resources/atoll-statusline.sh"
 
 cat > "$APP/Contents/Info.plist" <<PLIST

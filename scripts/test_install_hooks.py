@@ -130,6 +130,55 @@ command = \"mine\"
         text = "hooks = []\nmodel = \"kimi\"\n"
         self.assertEqual(hooks.strip_empty_kimi_hooks(text), 'model = "kimi"\n')
 
+    def test_pi_extension_install_is_idempotent_and_removable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            old = (hooks.PI_DIR, hooks.PI_EXTENSION, hooks.PI_ASSET)
+            try:
+                hooks.PI_DIR = root / "pi" / "agent"
+                hooks.PI_EXTENSION = hooks.PI_DIR / "extensions" / "atoll.ts"
+                hooks.PI_ASSET = root / "atoll-pi.ts"
+                hooks.PI_ASSET.write_text(hooks.PI_MARKER + "\nexport default () => {}\n")
+                neighbour = hooks.PI_EXTENSION.with_name("other.ts")
+                neighbour.parent.mkdir(parents=True)
+                neighbour.write_text("// user extension\n")
+
+                self.assertEqual(hooks.process_pi(False), "installed")
+                self.assertEqual(hooks.PI_EXTENSION.read_bytes(), hooks.PI_ASSET.read_bytes())
+                self.assertTrue(hooks.integration_installed("pi"))
+                self.assertEqual(hooks.process_pi(False), "unchanged")
+
+                # A newer asset refreshes the installed copy.
+                hooks.PI_ASSET.write_text(hooks.PI_MARKER + "\nexport default (pi) => {}\n")
+                self.assertEqual(hooks.process_pi(False), "installed")
+
+                self.assertEqual(hooks.process_pi(True), "removed")
+                self.assertFalse(hooks.PI_EXTENSION.exists())
+                self.assertEqual(hooks.process_pi(True), "unchanged")
+                self.assertTrue(neighbour.exists(), "other extensions must be untouched")
+            finally:
+                hooks.PI_DIR, hooks.PI_EXTENSION, hooks.PI_ASSET = old
+
+    def test_pi_refuses_to_overwrite_unmanaged_atoll_ts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            old = (hooks.PI_DIR, hooks.PI_EXTENSION, hooks.PI_ASSET)
+            try:
+                hooks.PI_DIR = root / "pi" / "agent"
+                hooks.PI_EXTENSION = hooks.PI_DIR / "extensions" / "atoll.ts"
+                hooks.PI_ASSET = root / "atoll-pi.ts"
+                hooks.PI_ASSET.write_text(hooks.PI_MARKER + "\n")
+                hooks.PI_EXTENSION.parent.mkdir(parents=True)
+                hooks.PI_EXTENSION.write_text("// the user's own atoll.ts\n")
+
+                with self.assertRaises(RuntimeError):
+                    hooks.process_pi(False)
+                with self.assertRaises(RuntimeError):
+                    hooks.process_pi(True)
+                self.assertEqual(hooks.PI_EXTENSION.read_text(), "// the user's own atoll.ts\n")
+            finally:
+                hooks.PI_DIR, hooks.PI_EXTENSION, hooks.PI_ASSET = old
+
     def test_opencode_install_and_remove_preserve_other_plugins(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

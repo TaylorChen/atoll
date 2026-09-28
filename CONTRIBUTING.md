@@ -19,6 +19,7 @@ scripts/build-app.sh --install                   # Release 构建并安装到 /A
 (cd bridge && go test ./...)
 python3 -m unittest scripts/test_install_hooks.py
 node --check scripts/atoll-opencode.js
+node --experimental-strip-types --check scripts/atoll-pi.ts   # Node 22.6+
 scripts/self-test.sh        # 需要 Atoll 正在运行：端到端事件与审批闭环
 ```
 
