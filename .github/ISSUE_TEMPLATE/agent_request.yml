@@ -1,0 +1,23 @@
+name: 新 Agent 接入 / New agent integration
+description: 希望 Atoll 支持某个 AI 编程 Agent / Request support for an agent
+labels: [integration]
+body:
+  - type: input
+    id: agent
+    attributes:
+      label: Agent 名称与版本 / Agent and version
+    validations:
+      required: true
+  - type: textarea
+    id: protocol
+    attributes:
+      label: Hook / 插件协议 / Hook or plugin protocol
+      description: 官方文档链接，以及它支持哪些事件、能否通过 hook 返回审批决策。没有官方协议的工具无法进入支持矩阵。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 真实事件样例（可选）/ Sample payloads (optional)
+      description: 本机抓到的 hook payload，请先去掉路径、prompt 等隐私信息。
+      render: json

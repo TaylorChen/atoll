@@ -1,0 +1,40 @@
+name: Bug 报告 / Bug report
+description: Atoll 行为不符合预期 / Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么 / What happened
+      description: 以及你期望的行为 / and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      placeholder: |
+        1. 在 Claude Code 里运行 …
+        2. 灵动岛显示 …
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: 涉及的 Agent 及版本 / Agent and version
+      placeholder: Claude Code 2.x / Codex 0.x / …
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Atoll 版本与 macOS 版本 / Atoll and macOS version
+      placeholder: Atoll 1.0.3, macOS 15.3
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 诊断报告（可选）/ Diagnostics (optional)
+      description: 设置 → 集成 → 诊断 → 导出诊断报告。报告不含 prompt、命令或 Token，粘贴前请再检查一遍。
+      render: text
