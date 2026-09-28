@@ -74,9 +74,9 @@ Atoll 把所有 Agent 的状态收进屏幕顶部的一个小岛：
 | Kimi CLI | ✅ | — | 原生 TOML Hook 配置 |
 | Cursor | ✅ | — | 原生扁平 Hook 格式 |
 | Pi | ✅ | — | 原生 TypeScript 扩展，仅监控 |
-| QoderWork | — | — | 当前版本不执行外部 hooks，暂无法接入 |
+| QoderWork | ✅ | — | Claude 兼容 Hook（`~/.qoderwork/settings.json`），仅监控 |
 
-> **注意**：**Codex Desktop** 等沙箱化桌面应用按 hook 身份做信任门控，需要在应用内信任 Atoll 的 hooks（详见设置 → 集成）。**QoderWork（约 0.9.12）** 会解析 hooks 配置但不执行 hook 命令（已用纯 shell 探针验证），待其后续版本支持。
+> **注意**：**Codex Desktop** 等沙箱化桌面应用按 hook 身份做信任门控，需要在应用内信任 Atoll 的 hooks（详见设置 → 集成）。**QoderWork（0.9.18 实测）** 只在任务会话启动时读取 hooks，开启集成后需新建任务才会出现在岛上。
 
 ## 快速开始
 

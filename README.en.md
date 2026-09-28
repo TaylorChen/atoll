@@ -76,9 +76,9 @@ Atoll gathers every agent's state into one small island at the top of the screen
 | Kimi CLI | ✅ | — | Native TOML hook configuration |
 | Cursor | ✅ | — | Native flat hook format |
 | Pi | ✅ | — | Native TypeScript extension; monitoring only |
-| QoderWork | — | — | Current version doesn't execute external hooks |
+| QoderWork | ✅ | — | Claude-compatible hooks (`~/.qoderwork/settings.json`); monitoring only |
 
-> **Note:** **Codex Desktop** gates hooks by identity and needs Atoll's hooks trusted in-app (Settings → Integrations). **QoderWork (~0.9.12)** parses a hooks config but does not execute hook commands (verified with a plain-shell canary), so it can't be integrated yet.
+> **Note:** **Codex Desktop** gates hooks by identity and needs Atoll's hooks trusted in-app (Settings → Integrations). **QoderWork (tested on 0.9.18)** reads hooks only when a task session starts, so start a new task after enabling the integration.
 
 ## Quick start
 

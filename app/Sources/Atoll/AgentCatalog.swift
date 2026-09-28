@@ -40,13 +40,11 @@ enum AgentCatalog {
         AgentDescriptor(id: "gemini", displayName: "Gemini CLI",
                         color: Color(red: 0.30, green: 0.85, blue: 0.85),
                         canApprove: false, trustGated: false, frontmostKeywords: ["gemini"]),
-        // QoderWork (desktop ~0.9.12) parses a hooks config but does not execute
-        // hook commands — verified with a plain-shell canary that never fired
-        // after a full restart. Effectively unavailable until it wires execution.
-        AgentDescriptor(id: "qoder", displayName: "Qoder",
+        // QoderWork (desktop, verified on 0.9.18) reads user hooks from
+        // ~/.qoderwork/settings.json once per task session; monitor only.
+        AgentDescriptor(id: "qoder", displayName: "QoderWork",
                         color: Color(red: 0.65, green: 0.45, blue: 1.0),
-                        canApprove: false, trustGated: true, frontmostKeywords: ["qoder"],
-                        note: "QoderWork 当前版本不执行外部 hooks，暂无法接入监控（等待其后续版本支持）。"),
+                        canApprove: false, trustGated: true, frontmostKeywords: ["qoder"]),
         AgentDescriptor(id: "qwen", displayName: "Qwen Code",
                         color: Color(red: 0.75, green: 0.52, blue: 0.98),
                         canApprove: true, trustGated: false, frontmostKeywords: []),

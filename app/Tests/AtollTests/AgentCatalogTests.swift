@@ -24,12 +24,12 @@ final class AgentCatalogTests: XCTestCase {
     func testQoderIsMonitorOnlyButStillTrustGated() {
         XCTAssertFalse(AgentCatalog.canApprove("qoder"),
                        "QoderWork has no PermissionRequest event → monitor only")
-        XCTAssertTrue(AgentCatalog.trustGated("qoder"), "desktop sandbox still trust-gated")
+        XCTAssertTrue(AgentCatalog.trustGated("qoder"), "hooks are cached per session: new task needed after install")
         XCTAssertFalse(AgentCatalog.approveCapableIDs.contains("qoder"))
     }
 
-    func testQoderHasUnavailableNoteAndWorkingAgentsDoNot() {
-        XCTAssertNotNil(AgentCatalog.note("qoder"), "QoderWork limitation must be surfaced")
+    func testWorkingAgentsHaveNoLimitationNote() {
+        XCTAssertNil(AgentCatalog.note("qoder"), "QoderWork hooks run since the ~/.qoderwork fix")
         XCTAssertNil(AgentCatalog.note("claude"))
         XCTAssertNil(AgentCatalog.note("codex"))
     }

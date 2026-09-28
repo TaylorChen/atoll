@@ -69,18 +69,22 @@ CONFIGS = {
             ("AfterAgent", None, 10000, False),
         ],
     },
-    # Qoder mirrors the Claude hook format (PascalCase events + nested hooks).
-    # QoderWork (desktop, Electron ~0.9.12) parses and normalizes a hooks config
-    # but does NOT execute external hook commands — verified with a plain-shell
-    # canary that never fired after a full app restart. It also rewrites the file
-    # on launch, keeping only the events it recognizes (SessionStart/Stop/
-    # SessionEnd) and stripping the rest. We install only those 3 to avoid config
-    # churn; monitoring is effectively unavailable until QoderWork wires hook
-    # execution (surfaced to the user via AgentCatalog.note).
+    # QoderWork (desktop) runs its bundled agent with ~/.qoderwork as the config
+    # dir; task sessions use `--setting-sources project,user`, so user hooks are
+    # read from ~/.qoderwork/settings.json (Claude hook format). Verified on
+    # 0.9.18: SessionStart/UserPromptSubmit/PreToolUse/PostToolUse/Stop all ran
+    # the bridge (run log `hook.started ... source="user"`). Hooks are read once
+    # per session, so only new tasks pick up a change. Monitor only: approvals
+    # go through QoderWork's own SDK permission channel, not hooks.
     "qoder": {
-        "path": Path.home() / ".qoder" / "settings.json",
+        "path": Path.home() / ".qoderwork" / "settings.json",
         "specs": [
             ("SessionStart", None, 10, False),
+            ("UserPromptSubmit", None, 10, False),
+            ("PreToolUse", "*", 10, False),
+            ("PostToolUse", "*", 10, False),
+            ("PostToolUseFailure", "*", 10, False),
+            ("PreCompact", None, 10, False),
             ("Stop", None, 10, False),
             ("SessionEnd", None, 10, False),
         ],
@@ -151,6 +155,9 @@ PI_DIR = Path.home() / ".pi" / "agent"
 PI_EXTENSION = PI_DIR / "extensions" / "atoll.ts"
 PI_ASSET = Path(__file__).with_name("atoll-pi.ts")
 PI_MARKER = "// @atoll-managed-pi-extension"
+# Older Atoll versions installed the qoder hooks here, but QoderWork never reads
+# this file. Only Atoll's own entries are stripped from it; the rest stays.
+LEGACY_QODER_PATH = Path.home() / ".qoder" / "settings.json"
 ENABLED_FILE = Path.home() / ".atoll" / "cache" / "enabled-integrations.json"
 LOCK_FILE = Path.home() / ".atoll" / "cache" / "install.lock"
 
@@ -784,6 +791,8 @@ def run_mutations() -> None:
             continue
         result = process(source, cfg["path"], cfg["specs"], remove, cfg.get("flat", False))
         print(f"{source}: {result}")
+        if source == "qoder":
+            print(f"qoder(legacy ~/.qoder): {process(source, LEGACY_QODER_PATH, [], True)}")
         if not restore:
             record_enabled(source, not remove)
     if (not only or only == "kimi") and (restore_sources is None or "kimi" in restore_sources):

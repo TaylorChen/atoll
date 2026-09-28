@@ -19,7 +19,7 @@ final class HookWatcher {
         NSString(string: "~/.claude").expandingTildeInPath,
         NSString(string: "~/.codex").expandingTildeInPath,
         NSString(string: "~/.gemini").expandingTildeInPath,
-        NSString(string: "~/.qoder").expandingTildeInPath,
+        NSString(string: "~/.qoderwork").expandingTildeInPath,
         NSString(string: "~/.cursor").expandingTildeInPath,
         NSString(string: "~/.qwen").expandingTildeInPath,
         NSString(string: "~/.factory").expandingTildeInPath,

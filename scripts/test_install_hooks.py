@@ -394,14 +394,43 @@ class PruneOnShrinkTests(unittest.TestCase):
 
 
 class QoderMonitorOnlyTests(unittest.TestCase):
-    def test_qoder_installs_only_the_events_it_recognizes(self):
-        specs = hooks.CONFIGS["qoder"]["specs"]
-        events = {name for name, _matcher, _timeout, _hold in specs}
-        # QoderWork only keeps SessionStart/Stop/SessionEnd (it strips the rest on
-        # launch) and executes none of them; install just those to avoid churn.
-        self.assertEqual(events, {"SessionStart", "Stop", "SessionEnd"})
+    def test_qoder_targets_qoderwork_config_and_is_monitor_only(self):
+        cfg = hooks.CONFIGS["qoder"]
+        # QoderWork's agent reads user hooks from ~/.qoderwork, not ~/.qoder.
+        self.assertEqual(cfg["path"], Path.home() / ".qoderwork" / "settings.json")
+        events = {name for name, _matcher, _timeout, _hold in cfg["specs"]}
+        self.assertTrue({"SessionStart", "UserPromptSubmit", "PreToolUse",
+                         "PostToolUse", "Stop"} <= events)
         self.assertNotIn("PermissionRequest", events)
-        self.assertTrue(all(not hold for *_rest, hold in specs), "qoder events are monitor-only")
+        self.assertTrue(all(not hold for *_rest, hold in cfg["specs"]), "qoder events are monitor-only")
+
+    def test_qoder_install_and_remove_strip_legacy_qoder_entries_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            old = (hooks.CONFIGS["qoder"]["path"], hooks.LEGACY_QODER_PATH, hooks.ENABLED_FILE, sys.argv)
+            try:
+                hooks.CONFIGS["qoder"]["path"] = root / "qoderwork" / "settings.json"
+                hooks.LEGACY_QODER_PATH = root / "qoder" / "settings.json"
+                hooks.ENABLED_FILE = root / "enabled.json"
+                hooks.ENABLED_FILE.write_text("[]\n")
+                hooks.LEGACY_QODER_PATH.parent.mkdir()
+                hooks.LEGACY_QODER_PATH.write_text(json.dumps({"hooks": {"Stop": [
+                    {"hooks": [{"type": "command", "command": "other-tool --source qoder"}]},
+                    {"hooks": [{"type": "command", "command": hooks.cmd("qoder")}]},
+                ]}}))
+
+                sys.argv = ["install-hooks.py", "--only", "qoder"]
+                hooks.run_mutations()
+                self.assertTrue(hooks.integration_installed("qoder"))
+                legacy = json.loads(hooks.LEGACY_QODER_PATH.read_text())["hooks"]["Stop"]
+                self.assertEqual([e["hooks"][0]["command"] for e in legacy], ["other-tool --source qoder"])
+
+                sys.argv = ["install-hooks.py", "--only", "qoder", "--remove"]
+                hooks.run_mutations()
+                self.assertFalse(hooks.integration_installed("qoder"))
+            finally:
+                (hooks.CONFIGS["qoder"]["path"], hooks.LEGACY_QODER_PATH,
+                 hooks.ENABLED_FILE, sys.argv) = old
 
     def test_qoder_install_is_non_destructive_to_other_tools(self):
         with tempfile.TemporaryDirectory() as tmp:

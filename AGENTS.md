@@ -2,13 +2,13 @@
 
 ## 产品边界
 
-Atoll 是 macOS 顶部浮动面板，用于统一监控 AI 编程 Agent，并在 Agent 支持时处理审批。当前支持：Claude Code、Codex、Cursor、Gemini CLI、Qoder、Qwen Code、Factory、CodeBuddy、Kimi CLI、OpenCode、Pi。
+Atoll 是 macOS 顶部浮动面板，用于统一监控 AI 编程 Agent，并在 Agent 支持时处理审批。当前支持：Claude Code、Codex、Cursor、Gemini CLI、QoderWork、Qwen Code、Factory、CodeBuddy、Kimi CLI、OpenCode、Pi。
 
 ## 集成架构
 
 所有来源先转换为 `NormalizedEvent`，但不得假设所有 Agent 的 Hook 协议相同：
 
-- Claude Code、Qoder、Qwen Code、Factory、CodeBuddy：Claude 兼容 JSON Hook。
+- Claude Code、QoderWork、Qwen Code、Factory、CodeBuddy：Claude 兼容 JSON Hook。QoderWork 的内置 agent 以 `~/.qoderwork` 为配置目录，任务会话（`--setting-sources project,user`）读 `~/.qoderwork/settings.json`；后台探测会话用 `--setting-sources "" --bare`，跳过全部 hooks，属正常现象。hooks 只在会话启动时读取，仅监控。
 - Codex：输入事件可复用 Claude 兼容解析；审批输出必须使用 Codex 官方 `PermissionRequest` 决策结构，不得输出 `updatedPermissions`。
 - Cursor、Gemini CLI：各自原生 Hook 事件。
 - Kimi CLI：Claude 兼容事件，安装配置为 `~/.kimi/config.toml`。
