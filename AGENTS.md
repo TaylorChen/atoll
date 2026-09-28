@@ -36,4 +36,6 @@ node --check scripts/atoll-opencode.js
 scripts/self-test.sh
 ```
 
+界面改动后执行 `scripts/render-screenshots.sh` 重新生成 README 截图（真实视图 + 占位数据，禁止用真实会话截图）。
+
 发布前还需执行 `scripts/build-app.sh --install`，重启 Atoll，并完成一次真实 Agent 人工审批验收。
